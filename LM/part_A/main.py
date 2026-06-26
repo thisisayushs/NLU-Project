@@ -27,8 +27,8 @@ train_loader, dev_loader, test_loader = get_dataloaders(
     tokenizer, DEVICE)
 
 lr = 1e-3  # This is now good for AdamW
-model = GPT2(vocab_len, pos_emb_size=1024, d_model=20, n_heads=1,
-             num_layers=1, ff_dim=20).to(DEVICE)
+model = GPT2(vocab_len, pos_emb_size=1024, d_model=256, n_heads=4,
+             num_layers=1, ff_dim=1024).to(DEVICE)
 model.apply(init_weights)
 optimizer = optim.AdamW(model.parameters(), lr=lr)
 criterion_train = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
@@ -40,8 +40,10 @@ best_ppl = math.inf
 best_state = None
 for epoch in range(n_epochs):
     train_loop(train_loader, optimizer, criterion_train, model)
+    train_loss = train_loop(train_loader, optimizer, criterion_train, model)
+    train_ppl = math.exp(train_loss)
     ppl_dev, _ = eval_loop(dev_loader, criterion_eval, model)
-    print(f"epoch {epoch:3d} | dev PPL {ppl_dev:.2f}")
+    print(f"epoch {epoch:3d} | train PPL {train_ppl:7.2f} | dev PPL {ppl_dev:7.2f}")
     if ppl_dev < best_ppl:
         best_ppl = ppl_dev
         best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
@@ -52,6 +54,8 @@ for epoch in range(n_epochs):
         break
     if DEVICE == "mps":
         torch.mps.empty_cache()
+    elif DEVICE.startswith("cuda"):
+        torch.cuda.empty_cache()
 
 model.load_state_dict(best_state)
 final_ppl, _ = eval_loop(test_loader, criterion_eval, model)
