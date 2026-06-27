@@ -27,8 +27,8 @@ train_loader, dev_loader, test_loader = get_dataloaders(
     tokenizer, DEVICE)
 
 lr = 1e-3  # This is now good for AdamW
-model = GPT2(vocab_len, pos_emb_size=1024, d_model=256, n_heads=4,
-             num_layers=1, ff_dim=1024).to(DEVICE)
+model = GPT2(vocab_len, pos_emb_size=1024, d_model=256, n_heads=8,
+             num_layers=4, ff_dim=1024, dropout=0.3, weight_tying=True).to(DEVICE)
 model.apply(init_weights)
 optimizer = optim.AdamW(model.parameters(), lr=lr)
 criterion_train = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
@@ -39,7 +39,6 @@ patience = 3
 best_ppl = math.inf
 best_state = None
 for epoch in range(n_epochs):
-    train_loop(train_loader, optimizer, criterion_train, model)
     train_loss = train_loop(train_loader, optimizer, criterion_train, model)
     train_ppl = math.exp(train_loss)
     ppl_dev, _ = eval_loop(dev_loader, criterion_eval, model)

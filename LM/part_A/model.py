@@ -15,6 +15,9 @@ class MultiHeadAttention(nn.Module):
         self.w_v = nn.Linear(d_model, d_model)
         self.out_proj = nn.Linear(d_model, d_model)
 
+        self.attn_dropout  = nn.Dropout(dropout)   # NEW (position 2: on attn weights)
+        self.resid_dropout = nn.Dropout(dropout)   # NEW (position 3: after out_proj)
+
     def forward(self, x, mask):
         B, L, d_model = x.size()
         q = self.w_q(x).view(B, L, self.n_heads, self.h_dim).transpose(1, 2)
@@ -28,8 +31,11 @@ class MultiHeadAttention(nn.Module):
         similarity = similarity.masked_fill(mask == 0, float("-inf"))
 
         attn = F.softmax(similarity, dim=-1)
+        attn = self.attn_dropout(attn)
         y = (attn @ v).transpose(1, 2).contiguous().view(B, L, d_model)
-        return self.out_proj(y)
+        y = self.out_proj(y)
+        y = self.resid_dropout(y)
+        return y
 
 
 class FeedForward(nn.Module):
@@ -39,6 +45,7 @@ class FeedForward(nn.Module):
             nn.Linear(d_model, hidden_dim),
             nn.GELU(),
             nn.Linear(hidden_dim, d_model),
+            nn.Dropout(dropout),
         )
 
     def forward(self, x):
@@ -61,17 +68,20 @@ class TransformerBlock(nn.Module):
 
 class GPT2(nn.Module):
     def __init__(self, vocab_size, pos_emb_size=1024, d_model=768, n_heads=12,
-                 num_layers=12, ff_dim=3072, dropout=0.1):
+                 num_layers=12, ff_dim=3072, dropout=0.1, weight_tying=False):
         super().__init__()
         self.pos_emb_size = pos_emb_size
         self.token_embed = nn.Embedding(vocab_size, d_model)
         self.pos_embed = nn.Embedding(pos_emb_size, d_model)
+        self.emb_dropout = nn.Dropout(dropout)
         self.blocks = nn.ModuleList([
             TransformerBlock(d_model, n_heads, ff_dim, dropout)
             for _ in range(num_layers)
         ])
         self.ln_f = nn.LayerNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size)
+        if weight_tying:
+            self.lm_head.weight = self.token_embed.weight
         mask = torch.tril(torch.ones(pos_emb_size, pos_emb_size)).unsqueeze(0).unsqueeze(0)
         self.register_buffer("mask", mask)
 
@@ -80,6 +90,7 @@ class GPT2(nn.Module):
         assert L <= self.pos_emb_size
         pos = torch.arange(L, device=idx.device)
         x = self.token_embed(idx) + self.pos_embed(pos)
+        x = self.emb_dropout(x)
         mask = self.mask[:, :, :L, :L]
         for block in self.blocks:
             x = block(x, mask)
