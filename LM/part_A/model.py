@@ -1,4 +1,3 @@
-# model.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,8 +14,8 @@ class MultiHeadAttention(nn.Module):
         self.w_v = nn.Linear(d_model, d_model)
         self.out_proj = nn.Linear(d_model, d_model)
 
-        self.attn_dropout  = nn.Dropout(dropout)   # NEW (position 2: on attn weights)
-        self.resid_dropout = nn.Dropout(dropout)   # NEW (position 3: after out_proj)
+        self.attn_dropout  = nn.Dropout(dropout)   
+        self.resid_dropout = nn.Dropout(dropout)   
 
     def forward(self, x, mask):
         B, L, d_model = x.size()
@@ -25,7 +24,6 @@ class MultiHeadAttention(nn.Module):
         v = self.w_v(x).view(B, L, self.n_heads, self.h_dim).transpose(1, 2)
 
         similarity = q @ k.transpose(-2, -1)
-        # NOTE: pinned to x.device so it runs on MPS/CUDA (only change vs notebook)
         scale = torch.sqrt(torch.tensor(self.h_dim, dtype=torch.float32, device=x.device))
         similarity = similarity / scale
         similarity = similarity.masked_fill(mask == 0, float("-inf"))

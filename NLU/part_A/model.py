@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, n_heads, dropout=0.0):
         super().__init__()
@@ -103,7 +102,7 @@ class GPT2(nn.Module):
 
         self.ln_f = nn.LayerNorm(d_model)
 
-        # dropout before the output heads (Part 2.A, lever 2)
+        # dropout before the output heads
         self.out_dropout = nn.Dropout(dropout)
 
         # two task heads
@@ -126,7 +125,7 @@ class GPT2(nn.Module):
             x = block(x, mask)
 
         x = self.ln_f(x)
-        x = self.out_dropout(x)  # lever 2: dropout before both output heads
+        x = self.out_dropout(x)  # dropout before both output heads
 
         # slots: one prediction per token (CLS position is predicted too but ignored,
         # since its ground-truth slot is the pad id)

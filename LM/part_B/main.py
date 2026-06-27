@@ -1,5 +1,3 @@
-# main.py
-
 import os
 import math
 import torch
@@ -18,13 +16,13 @@ else:
     DEVICE = "cpu"
 print("Using device:", DEVICE)
 
-# --- LoRA hyperparameters (sweep these) ---
+# LoRA hyperparameters
 RANK = 16
 ALPHA = 32
 lr = 3e-4
 
-# Save a FULL, self-contained checkpoint to bin/model.pt at the end of this run.
-# Keep False while sweeping; set True ONLY for the final/best config and re-run
+# we save a full, self-contained checkpoint to bin/model.pt at the end of this run.
+# False while sweeping, set True only for the final/best config and re-run.
 # that one config once to write the checkpoint.
 SAVE_MODEL = True
 
@@ -36,7 +34,7 @@ train_loader, dev_loader, test_loader = get_dataloaders(
     f"{DATA}/ptb.train.txt", f"{DATA}/ptb.valid.txt", f"{DATA}/ptb.test.txt",
     tokenizer, DEVICE)
 
-# load pretrained GPT-2, attach LoRA adapters, and train ONLY the adapters
+# we load pretrained GPT-2, attach LoRA adapters, and train ONLY the adapters.
 model = GPT2_LoRA.from_pretrained(MODEL_NAME, rank=RANK, alpha=ALPHA).to(DEVICE)
 mark_only_lora_as_trainable(model)
 param_stats(model)
@@ -54,7 +52,7 @@ for epoch in range(n_epochs):
     print(f"epoch {epoch:3d} | train PPL {train_ppl:7.2f} | dev PPL {ppl_dev:7.2f}")
     if ppl_dev < best_ppl:
         best_ppl = ppl_dev
-        # only the adapters change (the base is frozen), so snapshot just those (cheap)
+        # only the adapters change (the base is frozen), so we snapshot just those.
         best_state = {k: v.detach().cpu().clone()
                       for k, v in model.state_dict().items() if "lora" in k}
         patience = 3
@@ -67,12 +65,12 @@ for epoch in range(n_epochs):
     elif DEVICE.startswith("cuda"):
         torch.cuda.empty_cache()
 
-# restore the best adapters (base is unchanged) -> model is now the best model
+# we restore the best adapters (base is unchanged) - model is now the best model.
 model.load_state_dict(best_state, strict=False)
 final_ppl, _ = eval_loop(test_loader, model, tokenizer)
 print("Test PPL:", final_ppl)
 
-# save the FULL, self-contained checkpoint (base + adapters) only when requested
+# we save the full, self-contained checkpoint (base + adapters) only when requested.
 if SAVE_MODEL:
     os.makedirs("bin", exist_ok=True)
     torch.save(model.state_dict(), "bin/model.pt")

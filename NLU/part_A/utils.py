@@ -7,7 +7,6 @@ import torch.utils.data as data
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 
-# --- global config (mirrors the notebook) ---------------------------------
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 PAD_TOKEN = 0
 
@@ -70,7 +69,7 @@ class Lang():
         for elem in elements:
             vocab[elem] = len(vocab)
         if cls:
-            vocab['cls'] = PAD_TOKEN  # CLS slot target == pad -> ignored in loss
+            vocab['cls'] = PAD_TOKEN  # CLS slot target == pad - ignored in loss
         return vocab
 
 

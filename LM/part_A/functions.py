@@ -1,4 +1,3 @@
-# functions.py
 import math
 import copy
 import torch

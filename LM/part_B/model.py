@@ -1,5 +1,3 @@
-# model.py
-
 import math
 from typing import Optional, Tuple, Union
 
@@ -7,7 +5,6 @@ import torch
 import torch.nn as nn
 from transformers import GPT2LMHeadModel
 from transformers.models.gpt2.modeling_gpt2 import GPT2Attention
-
 
 class LoRALayer(nn.Module):
     """Low-rank adapter:  delta(x) = (alpha / rank) * (x A^T) B^T.
@@ -54,7 +51,6 @@ class CustomGPT2Attention(GPT2Attention):
         self.lora_v = LoRALayer(d, d, rank, alpha)
 
     # forward copied from transformers 4.38.0 GPT2Attention, with LoRA injected
-    # https://github.com/huggingface/transformers/blob/v4.38.0/src/transformers/models/gpt2/modeling_gpt2.py
     def forward(
         self,
         hidden_states: Optional[Tuple[torch.FloatTensor]],
@@ -78,7 +74,7 @@ class CustomGPT2Attention(GPT2Attention):
             attention_mask = encoder_attention_mask
         else:
             query, key, value = self.c_attn(hidden_states).split(self.split_size, dim=2)
-            # --- LoRA adapters on the query, key, and value projections ---
+            # LoRA adapters on the query, key, and value projections.
             query = query + self.lora_q(hidden_states)
             key = key + self.lora_k(hidden_states)
             value = value + self.lora_v(hidden_states)
@@ -121,8 +117,8 @@ class GPT2_LoRA(GPT2LMHeadModel):
         for block in self.transformer.h:
             old_attn = block.attn
             new_attn = CustomGPT2Attention(self.config, rank=rank, alpha=alpha)
-            # keep the pretrained attention weights; strict=False because the
-            # new module has extra LoRA keys not present in old_attn's state_dict
+            # we keep the pretrained attention weights, strict=False because the
+            # new module has extra LoRA keys not present in old_attn's state_dict.
             new_attn.load_state_dict(old_attn.state_dict(), strict=False)
             block.attn = new_attn
 

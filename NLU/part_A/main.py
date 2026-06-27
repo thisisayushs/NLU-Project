@@ -10,8 +10,7 @@ from utils import prepare_data, DEVICE, PAD_TOKEN
 from model import GPT2
 from functions import init_weights, train_loop, eval_loop
 
-# ============================== CONFIG ====================================
-# Part 2.A FINAL config (locked from the lever sweep).
+# final config (locked from the lever sweep).
 LR         = 3e-4
 D_MODEL    = 200
 N_HEADS    = 4
@@ -24,8 +23,7 @@ SEED_BASE  = 42        # run r uses seed SEED_BASE + r
 N_EPOCHS   = 200
 PATIENCE   = 5
 CLIP       = 5.0
-SAVE_MODEL = True      # saves the checkpoint of the BEST-DEV run to bin/model.pt
-# =========================================================================
+SAVE_MODEL = True      # saves the checkpoint of the best dev run to bin/model.pt
 
 TRAIN_PATH = os.path.join('dataset', 'ATIS', 'train.json')
 TEST_PATH  = os.path.join('dataset', 'ATIS', 'test.json')

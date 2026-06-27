@@ -10,8 +10,7 @@ from utils import prepare_data, DEVICE
 from model import JointBERT, JointGPT2
 from functions import train_loop, eval_loop
 
-# ============================== CONFIG ====================================
-MODEL_TYPE = "gpt2"        # "bert" or "gpt2"  <-- run once each
+MODEL_TYPE = "gpt2"        # "bert" or "gpt2"  - we run once each.
 LR         = 5e-5
 DROPOUT    = 0.1
 TRAIN_BS   = 32
@@ -22,14 +21,12 @@ CLIP       = 1.0
 RUNS       = 5             # independent runs (different seeds)
 SEED_BASE  = 42            # run r uses seed SEED_BASE + r
 SAVE_MODEL = True          # saves the FULL best-dev model -> bin/model_<type>.pt
-# =========================================================================
 
 MODEL_NAME = {"bert": "bert-base-uncased", "gpt2": "gpt2"}[MODEL_TYPE]
 MODEL_CLS  = {"bert": JointBERT,           "gpt2": JointGPT2}[MODEL_TYPE]
 
 TRAIN_PATH = os.path.join('dataset', 'ATIS', 'train.json')
 TEST_PATH  = os.path.join('dataset', 'ATIS', 'test.json')
-
 
 def build_tokenizer():
     if MODEL_TYPE == "gpt2":
