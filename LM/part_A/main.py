@@ -4,6 +4,7 @@ import copy
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import os
 
 from model import GPT2
 from utils import get_tokenizer, get_dataloaders
@@ -59,3 +60,7 @@ for epoch in range(n_epochs):
 model.load_state_dict(best_state)
 final_ppl, _ = eval_loop(test_loader, criterion_eval, model)
 print("Test PPL:", final_ppl)
+
+os.makedirs("bin", exist_ok=True)
+torch.save(best_state, "bin/model.pt")
+print("Saved bin/model.pt | reported test PPL:", final_ppl)
