@@ -221,3 +221,6 @@ __marimo__/
 bin/
 logs/
 dataset/
+
+# DS Store
+**/.DS_Store
